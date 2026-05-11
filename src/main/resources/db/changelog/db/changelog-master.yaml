@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: BB
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: rules
+      changes:
+        - createTable:
+            tableName: rules
+            columns:
+              - column: {name: id, type: uuid, constraints: {primaryKey: true}}
+              - column: {name: product_name, type: varchar(255)}
+              - column: {name: product_id, type: varchar(255), constraints: {unique: true}}
+              - column: {name: product_text, type: text}
+              - column: {name: rule, type: jsonb}
