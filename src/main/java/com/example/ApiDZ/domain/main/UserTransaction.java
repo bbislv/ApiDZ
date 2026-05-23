@@ -15,13 +15,13 @@ public class UserTransaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "user_id", nullable = false)
     private String userId;
 
-    @Column(nullable = false)
+    @Column(name = "product_type", nullable = false)
     private String productType;
 
-    @Column(nullable = false)
+    @Column(name = "transaction_type", nullable = false)
     private String transactionType;
 
     @Column(nullable = false)

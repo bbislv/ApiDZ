@@ -3,6 +3,7 @@ package com.example.ApiDZ.controller;
 import com.example.ApiDZ.domain.rules.RuleEntity;
 import com.example.ApiDZ.dto.RuleRequestDto;
 import com.example.ApiDZ.repository.rules.RuleRepository;
+import com.example.ApiDZ.service.RuleTriggerStatService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class RuleController {
     private final RuleRepository ruleRepo;
+    private final RuleTriggerStatService triggerStatService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @PostMapping
@@ -68,9 +70,17 @@ public class RuleController {
         return ResponseEntity.ok(Map.of("data", rules));
     }
 
+    @GetMapping("/stats")
+    public ResponseEntity<Map<String, Object>> getRuleStats() {
+        return ResponseEntity.ok(Map.of("stats", triggerStatService.getAllStats()));
+    }
+
     @DeleteMapping("/{productId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteRule(@PathVariable String productId) {
-        ruleRepo.deleteByProductId(productId);
+        ruleRepo.findByProductId(productId).ifPresent(rule -> {
+            triggerStatService.deleteByRuleId(rule.getId());
+            ruleRepo.delete(rule);
+        });
     }
 }
