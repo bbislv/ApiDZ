@@ -16,3 +16,55 @@ databaseChangeLog:
               - column: {name: product_id, type: varchar(255), constraints: {unique: true}}
               - column: {name: product_text, type: text}
               - column: {name: rule, type: jsonb}
+  - changeSet:
+      id: 2
+      author: BB
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: rule_trigger_stats
+      changes:
+        - createTable:
+            tableName: rule_trigger_stats
+            columns:
+              - column: {name: rule_id, type: uuid, constraints: {primaryKey: true}}
+              - column: {name: count, type: bigint, defaultValueNumeric: 0, constraints: {nullable: false}}
+  - changeSet:
+      id: 3-test-rules
+      author: BB
+      preConditions:
+        onFail: MARK_RAN
+        sqlCheck:
+          expectedResult: 0
+          sql: SELECT COUNT(*) FROM rules WHERE product_id = 'test-simple-credit'
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO rules (id, product_name, product_id, product_text, rule)
+              VALUES (
+                'a0000000-0000-0000-0000-000000000001'::uuid,
+                'Простой кредит',
+                'test-simple-credit',
+                'Оформите «Простой кредит» - вы активно пользуетесь дебетом и не используете кредитные продукты.',
+                '[{"query":"USER_OF","arguments":["CREDIT"],"negate":true},{"query":"TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW","arguments":["DEBIT",">"],"negate":false},{"query":"TRANSACTION_SUM_COMPARE","arguments":["DEBIT","DEPOSIT",">","100000"],"negate":false}]'::jsonb
+              );
+  - changeSet:
+      id: 4-test-rules-invest
+      author: BB
+      preConditions:
+        onFail: MARK_RAN
+        sqlCheck:
+          expectedResult: 0
+          sql: SELECT COUNT(*) FROM rules WHERE product_id = 'test-invest'
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO rules (id, product_name, product_id, product_text, rule)
+              VALUES (
+                'a0000000-0000-0000-0000-000000000002'::uuid,
+                'Брокерский счёт',
+                'test-invest',
+                'Откройте брокерский счёт - вы активный пользователь инвестиционных продуктов.',
+                '[{"query":"ACTIVE_USER_OF","arguments":["INVEST"],"negate":false}]'::jsonb
+              );
