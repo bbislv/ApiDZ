@@ -1,0 +1,194 @@
+openapi: 3.0.3
+info:
+  title: ApiDZ — сервис рекомендаций
+  description: REST API банковского сервиса персональных рекомендаций
+  version: 0.0.1-SNAPSHOT
+
+servers:
+  - url: http://localhost:8080
+    description: Локальная среда
+
+paths:
+  /recommendation/{userId}:
+    get:
+      summary: Получить рекомендации для пользователя
+      tags: [Recommendations]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Идентификатор пользователя в базе знаний (user_id)
+      responses:
+        '200':
+          description: Список текстов рекомендаций
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              example:
+                - "Откройте накопительный счёт - вы активно пользуетесь дебетом, но ещё не используете накопительные продукты."
+                - "Оформите «Простой кредит» - вы активно пользуетесь дебетом и не используете кредитные продукты."
+
+  /rule:
+    get:
+      summary: Список всех динамических правил
+      tags: [Rules]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RuleResponse'
+    post:
+      summary: Создать динамическое правило
+      tags: [Rules]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleRequest'
+      responses:
+        '200':
+          description: Правило создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleResponse'
+        '400':
+          description: Невалидный запрос
+
+  /rule/stats:
+    get:
+      summary: Статистика срабатываний динамических правил
+      tags: [Rules]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stats:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        rule_id:
+                          type: string
+                          format: uuid
+                        count:
+                          type: integer
+                          format: int64
+
+  /rule/{productId}:
+    delete:
+      summary: Удалить правило по product_id
+      tags: [Rules]
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Правило удалено
+
+  /management/clear-caches:
+    post:
+      summary: Очистить все Caffeine-кеши базы знаний
+      tags: [Management]
+      responses:
+        '204':
+          description: Кеши очищены
+
+  /management/info:
+    get:
+      summary: Информация о сервисе (имя и версия)
+      tags: [Management]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: ApiDZ
+                  version:
+                    type: string
+                    example: 0.0.1-SNAPSHOT
+
+components:
+  schemas:
+    RuleQuery:
+      type: object
+      required: [query, arguments, negate]
+      properties:
+        query:
+          type: string
+          enum:
+            - USER_OF
+            - ACTIVE_USER_OF
+            - TRANSACTION_SUM_COMPARE
+            - TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW
+        arguments:
+          type: array
+          items:
+            type: string
+        negate:
+          type: boolean
+
+    RuleRequest:
+      type: object
+      required: [product_name, product_id, product_text, rule]
+      properties:
+        product_name:
+          type: string
+        product_id:
+          type: string
+        product_text:
+          type: string
+        rule:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleQuery'
+
+    RuleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        product_name:
+          type: string
+        product_id:
+          type: string
+        product_text:
+          type: string
+        rule:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleQuery'
+
+tags:
+  - name: Recommendations
+    description: Выдача рекомендаций
+  - name: Rules
+    description: Динамические правила и статистика
+  - name: Management
+    description: Эксплуатация сервиса

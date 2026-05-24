@@ -1,0 +1,4 @@
+# Скопируйте в application-local.properties (не коммитить) или задайте переменные окружения
+
+TELEGRAM_BOT_TOKEN=your_token_here
+SPRING_DATASOURCE_RULES_PASSWORD=your_postgres_password
